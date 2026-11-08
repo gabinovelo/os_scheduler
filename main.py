@@ -21,37 +21,48 @@ def read_processes(file):
     return processes
 
 def format_result(name, metrics):
-    # formata cada média com uma casa decimal e troca o ponto pela vírgula
+    """ 
+    formata cada média com uma casa decimal e troca o ponto pela vírgula
+    """
+
     values = [f"{m:.1f}".replace(".", ",") for m in metrics]
     return f"{name} {' '.join(values)}"
+
+def calculate_metrics(completed_processes):
+    """
+    recebe uma lista de tuplas contendo: (arrival, burst, first_start, finish)
+    """
+
+    n = len(completed_processes)
+    if n == 0:
+        return 0.0, 0.0, 0.0
+
+    total_tat = sum(finish - arrival for arrival, burst, first_start, finish in completed_processes)
+    total_rt = sum(first_start - arrival for arrival, burst, first_start, finish in completed_processes)
+    total_wt = sum((finish - arrival) - burst for arrival, burst, first_start, finish in completed_processes)
+
+    return total_tat / n, total_rt / n, total_wt / n
 
 # algoritmos de escalonamento:
 
 def fcfs(processes):
     # ordena por chegada; o sorted mantém a ordem do arquivo em caso de empate
     queue = sorted(processes, key=lambda p: p[0])
-
     time = 0  # relógio da simulação
-    total_turnaround = 0
-    total_response = 0
-    total_waiting = 0
+    completed = []  # lista de processos completados
 
     for arrival, burst in queue:
         # se a CPU está ociosa, avança o relógio até o processo chegar
         if time < arrival:
             time = arrival
 
-        start = time            # instante em que o processo começa a executar
-        finish = start + burst  # executa até o fim, sem interrupção
-
-        total_turnaround += finish - arrival
-        total_response += start - arrival
-        total_waiting += finish - arrival - burst
-
+        first_start = time            # instante em que o processo começa a executar
+        finish = first_start + burst  # executa até o fim, sem interrupção
         time = finish
 
-    n = len(processes)
-    return total_turnaround / n, total_response / n, total_waiting / n
+        completed.append((arrival, burst, first_start, finish))
+
+    return calculate_metrics(completed)
 
 def main():
     # lê do arquivo passado como argumento, ou do input.txt por padrão
