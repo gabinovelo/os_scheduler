@@ -84,7 +84,7 @@ def sjf(processes):
             completed.append((arrival, burst, first_start, finish))
 
         else:
-            time += min(p[0] for p in queue) # pula para a próxima chegada
+            time = min(p[0] for p in queue) # pula para a próxima chegada
 
     return calculate_metrics(completed)
 
