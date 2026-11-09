@@ -64,6 +64,31 @@ def fcfs(processes):
 
     return calculate_metrics(completed)
 
+def sjf(processes):
+    time = 0
+    queue = sorted(processes, key=lambda p: p[0])  # ordena por chegada
+    completed = []
+
+    while queue:
+        available = [p for p in queue if p[0] <= time]
+
+        if available:
+            proc_choice = min(available, key=lambda p:  p[1])
+            queue.remove(proc_choice)
+
+            arrival, burst = proc_choice
+            first_start = time            # instante em que o processo começa a executar
+            finish = first_start + burst  # executa até o fim, sem interrupção
+            time = finish
+
+            completed.append((arrival, burst, first_start, finish))
+
+        else:
+            time = min(p[0] for p in queue) # pula para a próxima chegada
+
+    return calculate_metrics(completed)
+
+
 def main():
     # lê do arquivo passado como argumento, ou do input.txt por padrão
     if len(sys.argv) > 1:
@@ -79,7 +104,7 @@ def main():
     #    print(f"P{i + 1}: arrival={arrival}, burst={burst}")
 
     print(format_result("FCFS", fcfs(processes)))
-
+    print(format_result("SJF", sjf(processes)))
 
 if __name__ == "__main__":
     main()
