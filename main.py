@@ -1,6 +1,7 @@
 import sys
+from collections import deque
 
-# ulitários:
+# utilitários
 
 def read_processes(file): 
 
@@ -88,6 +89,50 @@ def sjf(processes):
 
     return calculate_metrics(completed)
 
+def rr(processes, quantum=2):
+    n = len(processes)
+    time = 0
+
+    # fila de processos que ainda não chegaram, com ordem de chegada
+    pending = deque(sorted(range(n), key=lambda i: processes[i][0]))
+
+    remaining = {i: processes[i][1] for i in range(n)}  # tempo restante de cada processo
+    first_start = {}
+    finish = {}
+
+    ready = deque() #fila de prontos
+
+    while pending or ready:
+        # move processos para a fila de prontos quem já chegou
+        while pending and processes[pending[0]][0] <= time:
+            ready.append(pending.popleft())
+
+        if not ready:
+            # CPU ociosa então pula para a próxima chegada
+            time = processes[pending[0]][0]
+            continue
+
+        i = ready.popleft()
+
+        if i not in first_start:
+            first_start[i] = time
+
+        run = min(quantum, remaining[i])
+        time += run
+        remaining[i] -= run
+
+        # quem chegou durante a fatia entra antes do processo preemptado
+        while pending and processes[pending[0]][0] <= time:
+            ready.append(pending.popleft())
+
+        if remaining[i] > 0:
+            ready.append(i)
+        else:
+            finish[i] = time
+
+    completed = [(processes[i][0], processes[i][1], first_start[i], finish[i]) for i in range(n)]
+
+    return calculate_metrics(completed)
 
 def main():
     # lê do arquivo passado como argumento, ou do input.txt por padrão
@@ -99,12 +144,9 @@ def main():
     with open(path) as file:
         processes = read_processes(file)
 
-    # TESTE: apagar antes de entregar
-    #for i, (arrival, burst) in enumerate(processes):
-    #    print(f"P{i + 1}: arrival={arrival}, burst={burst}")
-
     print(format_result("FCFS", fcfs(processes)))
     print(format_result("SJF", sjf(processes)))
+    print(format_result("RR", rr(processes)))
 
 if __name__ == "__main__":
     main()
