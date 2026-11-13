@@ -1,3 +1,4 @@
+# Equipe: Gabriela Marques Mangueira e Maria Rita de Figueiredo Feitosa
 import os
 import sys
 from collections import deque
